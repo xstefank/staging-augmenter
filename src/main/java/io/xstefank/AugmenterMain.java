@@ -80,10 +80,10 @@ public class AugmenterMain implements QuarkusApplication {
         File inFile = new File(input);
         File outFile = new File(output != null ? output : input);
         if (!outFile.exists()) {
-            if (outFile.createNewFile()) {
+            if (!outFile.createNewFile()) {
                 LOG.error("Cannot create output file.");
+                return 1;
             }
-            return 1;
         }
 
         JAXBContext jaxbContext = JAXBContext.newInstance(Settings.class);
