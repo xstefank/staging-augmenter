@@ -1,0 +1,16 @@
+= Staging augmenter
+
+This application is inteded to provide a way to add custom repositories (most
+probably staging) to the targetted `settings.xml`. This allows to pull dependencies
+for specific builds dynamically. It provides a similar functionality to
+`-Dmaven.repo.remote` available in Maven 2.
+
+== Usage
+
+[source,bash]
+----
+$ wget https://github.com/xstefank/staging-augmenter/raw/main/staging-augmenter
+$ chmod +x staging-augmenter
+$ ./staging-augmenter -r repoURL1,repoURL2 -o /path/to/output-settings.xml /path/to/settings.xml
+$ mvn clean install -s /path/to/output-settings.xml -Pmp-staging
+----
