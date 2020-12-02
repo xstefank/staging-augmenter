@@ -19,10 +19,17 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 
 @QuarkusMain
@@ -37,8 +44,6 @@ public class AugmenterMain implements QuarkusApplication {
 
     @Override
     public int run(String... args) throws Exception {
-//        args = new String[]{"-r=test,test2", "--output", "/home/mstefank/output.xml", "../src/main/resources/META-INF/resources/test-settings.xml"};
-
         if (args.length < 2) {
             outputHelp();
             return 0;
@@ -110,8 +115,16 @@ public class AugmenterMain implements QuarkusApplication {
         readSettings.profiles.add(profile);
 
         Marshaller marshaller = jaxbContext.createMarshaller();
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-        marshaller.marshal(readSettings, outFile);
+        StringWriter stringWriter = new StringWriter();
+        marshaller.marshal(readSettings, stringWriter);
+        String xml = stringWriter.toString().replaceAll(">\\s+<", "><");
+
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, "yes");
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+        transformer.transform(new StreamSource(new StringReader(xml)), new StreamResult(outFile));
+
         System.out.println("Modified settings.xml saved to " + outFile.getPath());
 
         return 0;
