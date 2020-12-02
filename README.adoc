@@ -52,3 +52,6 @@ which is the new profile called `mp-staging`.
 
 The build that will include the inputed staging repositories for downloads
 can now be run with `mvn clean install -s ./examples/output-settings.xml -Pmp-staging`.
+
+NOTE: The diff can be bigger if the format of the inputed XML is different to what
+JAXB will output. However, nothing is removed. Just reordered.
