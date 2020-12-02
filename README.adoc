@@ -11,6 +11,44 @@ for specific builds dynamically. It provides a similar functionality to
 ----
 $ wget https://github.com/xstefank/staging-augmenter/raw/main/staging-augmenter
 $ chmod +x staging-augmenter
-$ ./staging-augmenter -r repoURL1,repoURL2 -o /path/to/output-settings.xml /path/to/settings.xml
-$ mvn clean install -s /path/to/output-settings.xml -Pmp-staging
+$ ./staging-augmenter -r repoURL1,repoURL2 -o /path/to/settings.xml /path/to/settings.xml
+$ mvn clean install -s /path/to/settings.xml -Pmp-staging
 ----
+
+== Example
+
+If we take the `settings.xml` from link:examples/settings.xml and run the following command
+
+[source,bash]
+----
+$ ./staging-augmenter -r https://oss.sonatype.org/content/repositories/orgeclipsemicroprofile-1383,https://oss.sonatype.org/content/repositories/orgeclipsemicroprofile-1375/ -o ./examples/output-settings.xml ./examples/settings.xml
+----
+
+we will get the the `output-settings.xml` located in link:examples/output-settings.xml.
+
+Since the original `settings.xml` file was correctly formatted (JAXB can change
+the formatting) the diff of these two files is only the output of this program:
+
+[source,bash]
+----
+$ diff ./examples/settings.xml ./examples/output-settings.xml
+73a74,86
+>     <profile>
+>       <id>mp-staging</id>
+>       <repositories>
+>         <repository>
+>           <id>https%3A%2F%2Foss.sonatype.org%2Fcontent%2Frepositories%2Forgeclipsemicroprofile-1383</id>
+>           <url>https://oss.sonatype.org/content/repositories/orgeclipsemicroprofile-1383</url>
+>         </repository>
+>         <repository>
+>           <id>https%3A%2F%2Foss.sonatype.org%2Fcontent%2Frepositories%2Forgeclipsemicroprofile-1375%2F</id>
+>           <url>https://oss.sonatype.org/content/repositories/orgeclipsemicroprofile-1375/</url>
+>         </repository>
+>       </repositories>
+>     </profile>
+----
+
+which is the new profile called `mp-staging`.
+
+The build that will include the inputed staging repositories for downloads
+can now be run with `mvn clean install -s ./examples/output-settings.xml -Pmp-staging`.
