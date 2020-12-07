@@ -14,6 +14,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.parsers.ParserConfigurationException;
@@ -51,9 +52,9 @@ public class AugmenterMain implements QuarkusApplication {
 
         String repositories = null;
         String output = null;
-        String input = args[args.length - 1];
+        String input = null;
 
-        for (int i = 0; i < args.length - 1; i++) {
+        for (int i = 0; i < args.length; i++) {
             if (skip) {
                 skip = false;
                 continue;
@@ -69,20 +70,26 @@ public class AugmenterMain implements QuarkusApplication {
                 case "-o":
                 case "--output":
                     output = processValue(entry.value, args[i + 1]);
+                    break;
+                default:
+                    if (i == args.length - 1) {
+                        input = args[i];
+                    } else {
+                        LOG.warn("Unknown parameter: " + args[i]);
+                    }
             }
         }
 
         if (input == null) {
-            LOG.error("Input file not provided.");
+            System.out.println("Input file not provided. Output will be created.");
         }
 
         if (LOG.isDebugEnabled()) {
-            LOG.trace("Repositories: " + repositories);
-            LOG.trace("Output: " + output);
-            LOG.trace("Input: " + input);
+            LOG.debug("Repositories: " + repositories);
+            LOG.debug("Output: " + output);
+            LOG.debug("Input: " + input);
         }
 
-        File inFile = new File(input);
         File outFile = new File(output != null ? output : input);
         if (!outFile.exists()) {
             if (!outFile.createNewFile()) {
@@ -92,11 +99,7 @@ public class AugmenterMain implements QuarkusApplication {
         }
 
         JAXBContext jaxbContext = JAXBContext.newInstance(Settings.class);
-        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-
-        SAXSource source = createSaxSource(inFile);
-
-        Settings readSettings = (Settings) jaxbUnmarshaller.unmarshal(source);
+        Settings settings = input == null ? new Settings() : readSettings(new File(input), jaxbContext);
 
         // add custom profile
         Profile profile = new Profile();
@@ -112,11 +115,11 @@ public class AugmenterMain implements QuarkusApplication {
             LOG.warn("No repositories provided.");
         }
 
-        readSettings.profiles.add(profile);
+        settings.profiles.add(profile);
 
         Marshaller marshaller = jaxbContext.createMarshaller();
         StringWriter stringWriter = new StringWriter();
-        marshaller.marshal(readSettings, stringWriter);
+        marshaller.marshal(settings, stringWriter);
         String xml = stringWriter.toString().replaceAll(">\\s+<", "><");
 
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
@@ -128,6 +131,14 @@ public class AugmenterMain implements QuarkusApplication {
         System.out.println("Modified settings.xml saved to " + outFile.getPath());
 
         return 0;
+    }
+
+    private Settings readSettings(File inFile, JAXBContext jaxbContext) throws JAXBException, ParserConfigurationException, SAXException, FileNotFoundException {
+        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+
+        SAXSource source = createSaxSource(inFile);
+
+        return (Settings) jaxbUnmarshaller.unmarshal(source);
     }
 
     private SAXSource createSaxSource(File inFile) throws ParserConfigurationException, SAXException, FileNotFoundException {

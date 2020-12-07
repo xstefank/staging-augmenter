@@ -4,6 +4,7 @@ import javax.xml.bind.Element;
 import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Profile {
@@ -12,16 +13,8 @@ public class Profile {
 
     @XmlElementWrapper(name = "repositories")
     @XmlElement(name = "repository")
-    public List<Repository> repositories;
+    public List<Repository> repositories = new ArrayList<>();
 
     @XmlAnyElement(lax = true)
     public List<Element> others;
-
-    @Override
-    public String toString() {
-        return "Profile{" +
-            "id='" + id + '\'' +
-            ", repositories=" + repositories +
-            '}';
-    }
 }
